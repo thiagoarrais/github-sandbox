@@ -4,9 +4,7 @@ import (
     "flag"
     "log"
     "net/http"
-    "os"
 
-    "github.com/google/go-github/github"
     "github.com/parkr/auto-reply/affinity"
     "github.com/parkr/auto-reply/ctx"
     "github.com/parkr/auto-reply/hooks"
@@ -32,8 +30,8 @@ func main() {
     // Build the affinity handler.
     aff := &affinity.Handler{}
     aff.AddRepo("myorg", "myproject")
-    aff.AddTeam(context, 123, "Performance", "@myorg/performance")
-    aff.AddTeam(context, 456, "Documentation", "@myorg/documentation")
+    aff.AddTeam(context, 123) // @myorg/performance
+    aff.AddTeam(context, 456) // @myorg/documentation
 
     // Add the affinity handler's various event handlers to the event handlers map :)
     eventHandlers.AddHandler(hooks.IssuesEvent, aff.AssignIssueToAffinityTeamCaptain)
@@ -43,11 +41,11 @@ func main() {
     // Create the webhook handler. GlobalHandler takes the list of event handlers from
     // its configuration and fires each of them based on the X-GitHub-Event header from
     // the webhook payload.
-    myOrgHandler := hooks.GlobalHandler{
+    myOrgHandler := &hooks.GlobalHandler{
         Context:       context,
         EventHandlers: eventHandlers,
     }
-    http.HandleFunc("/_github/myproject", myOrgHandler)
+    http.Handle("/_github/myproject", myOrgHandler)
 
     log.Printf("Listening on :%s", port)
     log.Fatal(http.ListenAndServe(":"+port, nil))
